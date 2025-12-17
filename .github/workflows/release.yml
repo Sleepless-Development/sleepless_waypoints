@@ -1,4 +1,4 @@
-name: Create release
+name: Release
 
 on:
   push:
@@ -7,59 +7,59 @@ on:
 
 jobs:
   create-release:
-    if: github.actor_id != 210085057
+    name: Build and Create Tagged release
     runs-on: ubuntu-latest
+
     steps:
-      - name: Install zip
+      - name: Install archive tools
         run: sudo apt install zip
 
-      - name: Install Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Generate GitHub App token
-        id: app_token
-        uses: tibdex/github-app-token@v2
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
-
-      - name: Get latest code
-        uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
           ref: ${{ github.event.repository.default_branch }}
-          token: ${{ steps.app_token.outputs.token }}
+
+      - name: Get variables
+        id: get_vars
+        run: |
+          echo '::set-output name=SHORT_SHA::$(git rev-parse --short HEAD)'
+          echo '::set-output name=DATE::$(date +'%D')'
 
       - name: Bump manifest version
-        run: bun run .github/actions/bump-manifest-version.js
+        run: node .github/actions/bump-manifest-version.js
         env:
           TGT_RELEASE_VERSION: ${{ github.ref_name }}
 
-      - name: Push version bump change
-        uses: EndBug/add-and-commit@v9
+      - name: Push manifest change
+        uses: EndBug/add-and-commit@v8
         with:
           add: fxmanifest.lua
           push: true
-          default_author: github_actions
-          message: "chore: bump version to ${{ github.ref_name }}"
+          author_name: Manifest Bumper
+          author_email: 41898282+github-actions[bot]@users.noreply.github.com
+          message: "chore: bump manifest version to ${{ github.ref_name }}"
+
+      - name: Update tag ref
+        uses: EndBug/latest-tag@latest
+        with:
+          tag-name: ${{ github.ref_name }}
 
       - name: Bundle files
         run: |
           mkdir -p ./temp/sleepless_waypoints
-          cp ./{LICENSE,README.md,fxmanifest.lua,config.lua,types.lua,test.lua} ./temp/sleepless_waypoints
+          cp ./{README.md,LICENSE,fxmanifest.lua,config.lua,types.lua,test.lua} ./temp/sleepless_waypoints
           cp -r ./{client,server,web} ./temp/sleepless_waypoints
           cd ./temp && zip -r ../sleepless_waypoints.zip ./sleepless_waypoints
 
-      - name: Create release
+      - name: Create Release
         uses: "marvinpinto/action-automatic-releases@v1.2.1"
+        id: auto_release
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          title: "${{ github.ref_name }}"
           prerelease: false
           files: sleepless_waypoints.zip
 
-      - name: Update tag
-        uses: EndBug/latest-tag@v1
-        with:
-          ref: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
