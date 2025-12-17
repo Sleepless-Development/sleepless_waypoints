@@ -40,8 +40,8 @@ config.defaults = {
 -- DUI Settings
 -------------------------------------------------
 config.dui = {
-    width = 512,     -- DUI texture width in pixels
-    height = 1024,   -- DUI texture height in pixels
+    width = 512,   -- DUI texture width in pixels
+    height = 1024, -- DUI texture height in pixels
 }
 
 -------------------------------------------------
@@ -70,6 +70,9 @@ config.rendering = {
 config.server = {
     -- Cleanup interval for checking disconnected players (ms)
     cleanupInterval = 60000,
+
+    -- Enable version checking on server start
+    versionCheckEnabled = true,
 }
 
 return config
