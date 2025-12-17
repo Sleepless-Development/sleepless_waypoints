@@ -1,0 +1,254 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+
+:root {
+    --marker-color: #f5a623;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    width: 512px;
+    height: 1024px;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow: hidden;
+    font-family: "Orbitron", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+.marker-type {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    height: 100%;
+}
+
+/* ==================== SMALL MARKER ==================== */
+#marker-small {
+    justify-content: flex-start;
+    padding-top: 80px;
+}
+
+.small-image-container {
+    width: 280px;
+    height: 280px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 6px solid var(--marker-color);
+    border-radius: 30px;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    rotate: 45deg;
+}
+
+.small-image-container img {
+    width: 85%;
+    height: 85%;
+    object-fit: contain;
+    display: none;
+    rotate: -45deg;
+}
+
+.small-icon-container {
+    width: 280px;
+    height: 280px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 6px solid var(--marker-color);
+    border-radius: 30px;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    rotate: 45deg;
+}
+
+#small-icon {
+    font-size: 140px;
+    color: var(--marker-color);
+    rotate: -45deg;
+    text-shadow: 
+        0 0 10px rgba(0, 0, 0, 0.9),
+        4px 4px 8px rgba(0, 0, 0, 0.95);
+}
+
+.small-arrow {
+    width: 0;
+    height: 0;
+    border-left: 25px solid transparent;
+    border-right: 25px solid transparent;
+    border-top: 30px solid var(--marker-color);
+    margin-top: 60px;
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+}
+
+#small-distance {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    line-height: 1;
+    translate: 0 -100%;
+}
+
+#small-distance-value {
+    font-size: 80px;
+    font-weight: 800;
+    color: white;
+    text-shadow: 
+        0 0 20px rgba(0, 0, 0, 0.9),
+        4px 4px 8px rgba(0, 0, 0, 0.95),
+        -2px -2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: -2px;
+}
+
+.small-distance-unit {
+    font-size: 40px;
+    font-weight: 700;
+    color: white;
+    margin-left: 6px;
+    text-shadow: 
+        0 0 10px rgba(0, 0, 0, 0.9),
+        4px 4px 8px rgba(0, 0, 0, 0.95);
+}
+
+/* ==================== CHECKPOINT MARKER ==================== */
+#marker-checkpoint {
+    justify-content: flex-start;
+    padding-top: 20px;
+}
+
+.checkpoint-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+.checkpoint-image-container {
+    width: 120px;
+    height: 120px;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.checkpoint-image-container img {
+    max-width: 100px;
+    max-height: 100px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+.checkpoint-icon-container {
+    width: 120px;
+    height: 120px;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+#checkpoint-icon {
+    font-size: 96px;
+    color: var(--marker-color);
+    text-shadow: 
+        0 0 10px rgba(0, 0, 0, 0.9),
+        4px 4px 8px rgba(0, 0, 0, 0.95);
+}
+
+.checkpoint-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+#checkpoint-distance {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    line-height: 1;
+}
+
+#checkpoint-distance-value {
+    font-size: 80px;
+    font-weight: 800;
+    color: white;
+    text-shadow: 
+        0 0 20px rgba(0, 0, 0, 0.9),
+        4px 4px 8px rgba(0, 0, 0, 0.95),
+        -2px -2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: -2px;
+}
+
+.checkpoint-distance-unit {
+    font-size: 40px;
+    font-weight: 700;
+    color: white;
+    margin-left: 6px;
+    text-shadow: 
+        0 0 10px rgba(0, 0, 0, 0.9),
+        4px 4px 8px rgba(0, 0, 0, 0.95);
+}
+
+.checkpoint-divider {
+    width: 320px;
+    height: 6px;
+    background: var(--marker-color);
+    margin: 10px 0;
+    box-shadow: 0 0 10px var(--marker-color);
+}
+
+#checkpoint-label {
+    font-size: 36px;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-shadow: 
+        0 0 30px rgba(0, 0, 0, 0.95),
+        4px 4px 8px rgba(0, 0, 0, 0.9);
+}
+
+.checkpoint-arrow {
+    width: 0;
+    height: 0;
+    border-left: 36px solid transparent;
+    border-right: 36px solid transparent;
+    border-top: 54px solid var(--marker-color);
+    margin-top: 10px;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 0 16px var(--marker-color));
+}
+
+.checkpoint-line {
+    width: 8px;
+    flex-grow: 1;
+    background: linear-gradient(to bottom, white 0%, transparent 100%);
+    /* box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); */
+}
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.checkpoint-divider {
+    animation: pulse 2s ease-in-out infinite;
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height, initial-scale=1.0"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Small static marker -->
+    <div id="marker-small" class="marker-type" style="display: none">
+      <div id="small-distance" style="display: none">
+        <span id="small-distance-value">0</span>
+        <span class="small-distance-unit">M</span>
+      </div>
+      <div class="small-icon-container">
+        <i class="" id="small-icon"></i>
+      </div>
+      <div class="small-image-container">
+        <img id="small-image" src="" alt="" />
+      </div>
+      <div class="small-arrow"></div>
+    </div>
+
+    <!-- Tall checkpoint marker -->
+    <div id="marker-checkpoint" class="marker-type" style="display: none">
+      <div class="checkpoint-container">
+        <div class="checkpoint-icon-container">
+          <i class="" id="checkpoint-icon"></i>
+        </div>
+        <div class="checkpoint-image-container">
+          <img id="checkpoint-image" src="" alt="" />
+        </div>
+        <div class="checkpoint-content">
+          <div id="checkpoint-distance" style="display: none">
+            <span id="checkpoint-distance-value">0</span>
+            <span class="checkpoint-distance-unit">M</span>
+          </div>
+          <div class="checkpoint-divider"></div>
+          <div id="checkpoint-label">CHECKPOINT</div>
+        </div>
+        <div class="checkpoint-arrow"></div>
+        <div class="checkpoint-line"></div>
+      </div>
+    </div>
+    <script defer type="module" src="script.js"></script>
+  </body>
+</html>
