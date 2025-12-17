@@ -48,7 +48,8 @@ jobs:
       - name: Bundle files
         run: |
           mkdir -p ./temp/sleepless_waypoints
-          cp ./{README.md,LICENSE,fxmanifest.lua,config.lua,types.lua,test.lua} ./temp/sleepless_waypoints
+          mkdir -p ./temp/sleepless_waypoints/web
+          cp ./{README.md,LICENSE,fxmanifest.lua,config.lua,test.lua,types.lua} ./temp/sleepless_waypoints
           cp -r ./{client,server,web} ./temp/sleepless_waypoints
           cd ./temp && zip -r ../sleepless_waypoints.zip ./sleepless_waypoints
 
@@ -57,7 +58,7 @@ jobs:
         id: auto_release
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          title: "${{ github.ref_name }}"
+          title: "${{ env.RELEASE_VERSION }}"
           prerelease: false
           files: sleepless_waypoints.zip
 
