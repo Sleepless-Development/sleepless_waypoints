@@ -19,6 +19,8 @@
 ---@field minHeight? number Minimum height for checkpoint line (default: 2.0)
 ---@field maxHeight? number Maximum height for checkpoint line (default: 50.0)
 ---@field groundZ? number Ground Z coordinate for the line (default: coords.z - 2)
+---@field removeWhenClose? boolean Whether to auto-remove when close (default: false)
+---@field removeDistance? number Distance to player for auto-removal (default: 5.0)
 
 ---@class WaypointInstance
 ---@field id number Unique waypoint identifier

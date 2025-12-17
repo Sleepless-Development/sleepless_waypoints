@@ -9,7 +9,7 @@ if lib.context == "client" then
     -- Test small marker
     RegisterCommand('testsmall', function()
         local playerPos = GetEntityCoords(cache.ped)
-        local testPos = playerPos + vec3(0, 5, 0)
+        local testPos = playerPos + GetEntityForwardVector(cache.ped) * 5.0
 
         local id = Waypoint.create({
             coords = testPos,
@@ -19,6 +19,9 @@ if lib.context == "client" then
             icon = "hand",
             size = 0.15,
             drawDistance = 100.0,
+            removeWhenClose = true,
+            removeDistance = 1.0,
+            displayDistance = false,
         })
 
         print('Created small waypoint:', id)

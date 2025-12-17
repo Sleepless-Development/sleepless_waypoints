@@ -63,6 +63,8 @@ function WaypointManager.create(data)
             minHeight = data.minHeight or config.defaults.minHeight,
             maxHeight = data.maxHeight or config.defaults.maxHeight,
             groundZ = data.groundZ or (data.coords.z + config.defaults.groundZOffset),
+            removeWhenClose = data.removeWhenClose or false,
+            removeDistance = data.removeDistance or 5.0,
             displayDistance = data.displayDistance,
         },
         dui = dui,
@@ -239,6 +241,12 @@ function WaypointManager.render(waypoint, camPos, playerPos)
             waypoint.dui.dictName,
             waypoint.dui.txtName
         )
+    end
+
+    if data.removeWhenClose and playerDist <= data.removeDistance then
+        WaypointManager.remove(waypoint.id)
+        lib.print.debug('Removed waypoint for being close:', waypoint.id)
+        return false
     end
 
     return true

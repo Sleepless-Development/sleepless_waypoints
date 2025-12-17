@@ -92,12 +92,31 @@ body {
     filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
 }
 
+#small-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 60px;
+}
+
+#small-label {
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    /* margin-bottom: 10px; */
+    text-shadow: 
+        0 0 30px rgba(0, 0, 0, 0.95),
+        4px 4px 8px rgba(0, 0, 0, 0.9);
+}
+
 #small-distance {
     display: flex;
     align-items: baseline;
     justify-content: center;
     line-height: 1;
-    translate: 0 -100%;
 }
 
 #small-distance-value {
