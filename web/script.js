@@ -1,4 +1,30 @@
 let currentType = null;
+let currentDistance = null;
+
+function animateDistance(newValue, duration = 90) {
+  const element =
+    currentType === "checkpoint"
+      ? document.getElementById("checkpoint-distance-value")
+      : document.getElementById("small-distance-value");
+  const start = parseFloat(currentDistance);
+  const end = parseFloat(newValue);
+  const startTime = performance.now();
+
+  function animate(currentTime) {
+    const elapsed = currentTime - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    const easedT = t * t * (3 - 2 * t);
+    const value = start + (end - start) * easedT;
+    element.textContent = Math.round(value);
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      currentDistance = newValue;
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
 
 function getFontAwesomeClass(icon) {
   if (!icon) return "";
@@ -110,12 +136,18 @@ window.addEventListener("message", (event) => {
       break;
 
     case "setDistance":
-      if (currentType === "checkpoint") {
-        document.getElementById("checkpoint-distance-value").textContent =
-          data.value || "0";
+      const newDist = data.value || "0";
+      const duration = data.duration - 10 || 100;
+      if (!currentDistance || duration <= 50) {
+        currentDistance = newDist;
+        if (currentType === "checkpoint") {
+          document.getElementById("checkpoint-distance-value").textContent =
+            newDist;
+        } else {
+          document.getElementById("small-distance-value").textContent = newDist;
+        }
       } else {
-        document.getElementById("small-distance-value").textContent =
-          data.value || "0";
+        animateDistance(newDist, data.duration - 10);
       }
       break;
 

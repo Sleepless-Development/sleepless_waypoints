@@ -207,8 +207,11 @@ function WaypointManager.render(waypoint, camPos, playerPos)
 
     if not waypoint.dui.dictName or not waypoint.dui.txtName then return false end
 
-    if data.displayDistance then
-        waypoint.dui:sendMessage({ action = 'setDistance', value = tostring(math.floor(playerDist)) })
+    if data.displayDistance and (not waypoint.nextDistanceUpdate or GetGameTimer() >= waypoint.nextDistanceUpdate) and (waypoint.lastDistance ~= math.floor(playerDist)) then
+        waypoint.nextDistanceUpdate = GetGameTimer() + config.rendering.distanceUpdateInterval
+        waypoint.lastDistance = math.floor(playerDist)
+
+        waypoint.dui:sendMessage({ action = 'setDistance', value = tostring(math.floor(playerDist)), duration = config.rendering.distanceUpdateInterval })
     end
 
     if data.type == 'checkpoint' then
@@ -218,10 +221,10 @@ function WaypointManager.render(waypoint, camPos, playerPos)
 
         local quadWidth = size
         local quadHeight = size * config.rendering.checkpointAspectRatio
-        local markerCenterPos = vec3(data.coords.x, data.coords.y, data.groundZ + (quadHeight / 2))
+        local markerPos = vec3(data.coords.x, data.coords.y, data.groundZ)
 
-        utils.drawTexturedQuad(
-            markerCenterPos,
+        utils.drawTexturedTriangle(
+            markerPos,
             quadWidth,
             quadHeight,
             255, 255, 255, alpha,
@@ -232,11 +235,15 @@ function WaypointManager.render(waypoint, camPos, playerPos)
         local baseSize = data.size * config.rendering.checkpointBaseMultiplier
         local perspectiveScale = camDist / config.rendering.perspectiveDivisor
         local size = baseSize * math.max(config.rendering.smallMinScale, perspectiveScale)
+        local height = size * config.rendering.smallAspectRatio
 
-        utils.drawTexturedQuad(
-            data.coords,
+        -- Offset position down so the visual center stays at original coords
+        local markerPos = vec3(data.coords.x, data.coords.y, data.coords.z - (height / 2))
+
+        utils.drawTexturedTriangle(
+            markerPos,
             size,
-            size * config.rendering.smallAspectRatio,
+            height,
             255, 255, 255, alpha,
             waypoint.dui.dictName,
             waypoint.dui.txtName

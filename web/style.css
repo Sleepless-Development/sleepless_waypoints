@@ -40,8 +40,8 @@ body {
 }
 
 .small-image-container {
-    width: 280px;
-    height: 280px;
+    width: 240px;
+    height: 240px;
     background: rgba(0, 0, 0, 0.7);
     border: 6px solid var(--marker-color);
     border-radius: 30px;
@@ -61,8 +61,8 @@ body {
 }
 
 .small-icon-container {
-    width: 280px;
-    height: 280px;
+    width: 240px;
+    height: 240px;
     background: rgba(0, 0, 0, 0.7);
     border: 6px solid var(--marker-color);
     border-radius: 30px;

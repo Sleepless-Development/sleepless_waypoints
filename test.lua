@@ -17,11 +17,11 @@ if lib.context == "client" then
             color = '#ff6b6b',
             -- image = 'nui://ox_inventory/web/images/copper_ore.webp',
             icon = "hand",
-            size = 0.15,
+            size = 0.25,
             drawDistance = 100.0,
             removeWhenClose = true,
             removeDistance = 1.0,
-            displayDistance = false,
+            displayDistance = true,
         })
 
         print('Created small waypoint:', id)
@@ -42,14 +42,14 @@ if lib.context == "client" then
             type = 'checkpoint',
             color = '#f5a623',
             label = 'CHECKPOINT',
-            image = 'nui://ox_inventory/web/images/copper_ore.webp',
+            -- image = 'nui://ox_inventory/web/images/copper_ore.webp',
             icon = "hand",
             size = 1.0,
             drawDistance = 500.0,
             groundZ = playerPos.z - 1,
             minHeight = 5.0,
             maxHeight = 80.0,
-            displayDistance = false,
+            displayDistance = true,
         })
 
         print('Created checkpoint waypoint:', id)

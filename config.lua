@@ -51,6 +51,9 @@ config.rendering = {
     -- Main loop update interval (ms) - how often to check which waypoints should render
     updateInterval = 100,
 
+    -- Distance text update interval (ms) - how often to update distance text on waypoints. this will significantly reduce performance if lowered
+    distanceUpdateInterval = 100,
+
     -- Perspective scaling
     perspectiveDivisor = 20.0, -- Divides camera distance to calculate perspective scale
 

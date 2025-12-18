@@ -27,6 +27,8 @@
 ---@field data WaypointData Waypoint configuration data
 ---@field dui Dui The DUI instance for rendering
 ---@field active boolean Whether the waypoint is active
+---@field nextDistanceUpdate number? Next timestamp to update distance text
+---@field lastDistance number? Last distance value shown
 
 ---@class WaypointManager
 ---@field create fun(data: WaypointData): number Create a new waypoint, returns waypoint ID
