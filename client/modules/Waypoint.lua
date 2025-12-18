@@ -22,7 +22,9 @@ function WaypointManager.create(data)
         height = config.dui.height,
     })
 
-    Wait(100) -- Allow some time for DUI to initialize
+    while not IsDuiAvailable(dui.duiObject) do
+        Wait(100)
+    end
 
     dui:sendMessage({ action = 'setType', type = waypointType })
 
@@ -211,7 +213,8 @@ function WaypointManager.render(waypoint, camPos, playerPos)
         waypoint.nextDistanceUpdate = GetGameTimer() + config.rendering.distanceUpdateInterval
         waypoint.lastDistance = math.floor(playerDist)
 
-        waypoint.dui:sendMessage({ action = 'setDistance', value = tostring(math.floor(playerDist)), duration = config.rendering.distanceUpdateInterval })
+        waypoint.dui:sendMessage({ action = 'setDistance', value = tostring(math.floor(playerDist)), duration = config
+        .rendering.distanceUpdateInterval })
     end
 
     if data.type == 'checkpoint' then
