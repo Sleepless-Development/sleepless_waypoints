@@ -10,6 +10,14 @@ local idToIndex = {} -- maps waypoint id -> array index
 local waypointArray = {}
 local waypointId = 0
 
+local waitingForDuiLoad = {}
+
+RegisterNUICallback('load', function(data, cb)
+    local id = tonumber(data.id)
+    waitingForDuiLoad[id] = nil
+    cb({})
+end)
+
 function WaypointManager.create(data)
     waypointId = waypointId + 1
     local id = waypointId
@@ -20,9 +28,13 @@ function WaypointManager.create(data)
         url = ('nui://%s/web/index.html'):format(cache.resource),
         width = config.dui.width,
         height = config.dui.height,
+        debug = false
     })
 
-    while not IsDuiAvailable(dui.duiObject) do
+    waitingForDuiLoad[id] = true
+
+    while waitingForDuiLoad[id] do
+        dui:sendMessage({ action = 'load', id = id })
         Wait(100)
     end
 
@@ -37,7 +49,6 @@ function WaypointManager.create(data)
     end
 
     if data.icon then
-        print('Setting icon for waypoint:', id, data.icon)
         dui:sendMessage({ action = 'setIcon', icon = data.icon })
     end
 
@@ -213,8 +224,11 @@ function WaypointManager.render(waypoint, camPos, playerPos)
         waypoint.nextDistanceUpdate = GetGameTimer() + config.rendering.distanceUpdateInterval
         waypoint.lastDistance = math.floor(playerDist)
 
-        waypoint.dui:sendMessage({ action = 'setDistance', value = tostring(math.floor(playerDist)), duration = config
-        .rendering.distanceUpdateInterval })
+        waypoint.dui:sendMessage({
+            action = 'setDistance',
+            value = tostring(math.floor(playerDist)),
+            duration = config.rendering.distanceUpdateInterval
+        })
     end
 
     if data.type == 'checkpoint' then

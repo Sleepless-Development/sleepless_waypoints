@@ -26,6 +26,18 @@ function animateDistance(newValue, duration = 90) {
   requestAnimationFrame(animate);
 }
 
+export async function fetchNui(eventName, data) {
+  const resp = await fetch(`https://sleepless_waypoints/${eventName}`, {
+    method: "post",
+    headers: {
+      "Content-Type": "application/json; charset=UTF-8",
+    },
+    body: JSON.stringify(data),
+  });
+
+  return await resp.json();
+}
+
 function getFontAwesomeClass(icon) {
   if (!icon) return "";
   // If already has fa- prefix, use as-is
@@ -40,6 +52,10 @@ window.addEventListener("message", (event) => {
   const data = event.data;
 
   switch (data.action) {
+    case "load":
+      fetchNui("load", { id: data.id });
+      break;
+
     case "setType":
       document
         .querySelectorAll(".marker-type")
