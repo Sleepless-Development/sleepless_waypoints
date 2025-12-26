@@ -1,7 +1,7 @@
 fx_version 'cerulean'
 game 'gta5'
 
-version '1.0.4'
+version '1.0.5'
 lua54 'yes'
 author 'DemiAutomatic'
 
