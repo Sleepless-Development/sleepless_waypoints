@@ -5,6 +5,7 @@ local config = require 'config'
 -- Main Render Loops
 -------------------------------------------------
 local shouldRender = {}
+local currentlyRendering = {}
 local drawRunning = false
 
 local function drawLoop()
@@ -51,6 +52,7 @@ CreateThread(function()
 
 
         local newShouldRender = {}
+        local newCurrentlyRendering = {}
         local camPos = GetFinalRenderedCamCoord()
 
         local waypointArray = Waypoint.getArray()
@@ -58,11 +60,40 @@ CreateThread(function()
         for i = 1, #waypointArray do
             local waypoint = waypointArray[i]
             if Waypoint.shouldRender(waypoint, camPos) then
-                newShouldRender[#newShouldRender + 1] = waypoint
+
+                if not waypoint.isRendering then
+                    Waypoint.acquireForRendering(waypoint)
+                end
+
+                if waypoint.isRendering then
+                    newShouldRender[#newShouldRender + 1] = waypoint
+                    newCurrentlyRendering[waypoint.id] = true
+                end
             end
         end
 
+        local releasedCount = 0
+        for id, _ in pairs(currentlyRendering) do
+            if not newCurrentlyRendering[id] then
+                local waypoint = Waypoint.get(id)
+                if waypoint then
+                    Waypoint.releaseFromRendering(waypoint)
+                    releasedCount = releasedCount + 1
+                end
+            end
+        end
+
+        local prevCount = #shouldRender
+        if #newShouldRender ~= prevCount or releasedCount > 0 then
+            lib.print.debug(('[RENDER LOOP] Visible: %d | Released: %d | Total waypoints: %d'):format(
+                #newShouldRender,
+                releasedCount,
+                #waypointArray
+            ))
+        end
+
         shouldRender = newShouldRender
+        currentlyRendering = newCurrentlyRendering
 
         if #shouldRender > 0 and not drawRunning then
             drawLoop()

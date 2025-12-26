@@ -24,9 +24,10 @@
 ---@class WaypointInstance
 ---@field id number Unique waypoint identifier
 ---@field data WaypointData Waypoint configuration data
----@field dui Dui The DUI instance for rendering
----@field duiId number The DUI pool ID for releasing back to pool
+---@field dui Dui? The DUI instance for rendering (nil when not rendering)
+---@field duiId number? The DUI pool ID for releasing back to pool (nil when not rendering)
 ---@field active boolean Whether the waypoint is active
+---@field isRendering boolean Whether the waypoint currently has a DUI acquired for rendering
 ---@field nextDistanceUpdate number? Next timestamp to update distance text
 ---@field lastDistance number? Last distance value shown
 
@@ -37,6 +38,10 @@
 ---@field removeAll fun() Remove all active waypoints
 ---@field get fun(id: number): WaypointInstance? Get waypoint by ID
 ---@field getAll fun(): table<number, WaypointInstance> Get all active waypoints
+---@field getArray fun(): WaypointInstance[] Get all waypoints as array
+---@field shouldRender fun(waypoint: WaypointInstance, camPos: vector3): boolean Check if waypoint should render
+---@field acquireForRendering fun(waypoint: WaypointInstance): boolean Acquire a DUI for rendering
+---@field releaseFromRendering fun(waypoint: WaypointInstance) Release DUI when no longer visible
 ---@field render fun(waypoint: WaypointInstance, camPos: vector3, playerPos: vector3): boolean Render a waypoint
 
 ---@class WaypointUtils

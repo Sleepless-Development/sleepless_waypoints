@@ -53,6 +53,18 @@ local function resetDui(duiWrapper)
     dui:sendMessage({ action = 'reset' })
 end
 
+--- Prints current pool status for debugging
+local function debugPoolStatus(context)
+    local inUseCount = 0
+    for _ in pairs(poolInUse) do inUseCount = inUseCount + 1 end
+    lib.print.debug(('[POOL STATUS] %s - In Use: %d | Available: %d | Total Created: %d'):format(
+        context or 'Status',
+        inUseCount,
+        #poolAvailable,
+        poolNextId
+    ))
+end
+
 --- Acquire a DUI from the pool (creates new one if pool is empty)
 ---@return table duiWrapper The acquired DUI wrapper
 ---@return number id The ID of the acquired DUI
@@ -60,7 +72,8 @@ local function acquireDui()
     if #poolAvailable > 0 then
         local duiWrapper = table.remove(poolAvailable)
         poolInUse[duiWrapper.id] = duiWrapper
-        lib.print.debug('Acquired pooled DUI', duiWrapper.id, '- Available:', #poolAvailable)
+        lib.print.debug(('[POOL] Reusing DUI #%d from pool'):format(duiWrapper.id))
+        debugPoolStatus('After Acquire (reused)')
         return duiWrapper, duiWrapper.id
     end
 
@@ -69,7 +82,8 @@ local function acquireDui()
     local duiWrapper = createDui(id)
     poolInUse[id] = duiWrapper
 
-    lib.print.debug('Created new DUI', id, '(pool will grow as needed)')
+    lib.print.debug(('[POOL] Created NEW DUI #%d (pool was empty)'):format(id))
+    debugPoolStatus('After Acquire (new)')
     return duiWrapper, id
 end
 
@@ -77,7 +91,7 @@ end
 local function releaseDui(id)
     local duiWrapper = poolInUse[id]
     if not duiWrapper then
-        lib.print.debug('Attempted to release unknown DUI', id)
+        lib.print.debug(('[POOL] WARNING: Attempted to release unknown DUI #%d'):format(id))
         return
     end
 
@@ -85,7 +99,8 @@ local function releaseDui(id)
 
     resetDui(duiWrapper)
     poolAvailable[#poolAvailable + 1] = duiWrapper
-    lib.print.debug('Released DUI', id, 'back to pool - Available:', #poolAvailable)
+    lib.print.debug(('[POOL] Released DUI #%d back to pool'):format(id))
+    debugPoolStatus('After Release')
 end
 
 --- Cleanup all DUIs (call on resource stop)
@@ -113,28 +128,14 @@ AddEventHandler('onResourceStop', function(resourceName)
     end
 end)
 
-function WaypointManager.create(data)
-    waypointId = waypointId + 1
-    local id = waypointId
-
-    local waypointType = data.type or 'small'
-
-    local duiWrapper, duiId = acquireDui()
-    if not duiWrapper then
-        lib.print.error('Failed to acquire DUI from pool for waypoint', id)
-        return nil
-    end
-
-    local dui = duiWrapper.dui
-    dui:sendMessage({ action = 'setType', type = waypointType })
-
-    if data.color then
-        dui:sendMessage({ action = 'setColor', color = data.color })
-    end
-
-    if data.label then
-        dui:sendMessage({ action = 'setLabel', text = data.label })
-    end
+--- Configures a DUI with waypoint data
+---@param dui table The DUI object
+---@param data table The waypoint data
+local function configureDui(dui, data)
+    dui:sendMessage({ action = 'setType', type = data.type })
+    dui:sendMessage({ action = 'setColor', color = data.color })
+    dui:sendMessage({ action = 'setLabel', text = data.label })
+    dui:sendMessage({ action = 'showDistance', show = data.displayDistance })
 
     if data.icon then
         dui:sendMessage({ action = 'setIcon', icon = data.icon })
@@ -143,12 +144,17 @@ function WaypointManager.create(data)
     if data.image then
         dui:sendMessage({ action = 'setImage', url = data.image })
     end
+end
+
+function WaypointManager.create(data)
+    waypointId = waypointId + 1
+    local id = waypointId
+
+    local waypointType = data.type or 'small'
 
     if data.displayDistance == nil then
         data.displayDistance = true
     end
-
-    dui:sendMessage({ action = 'showDistance', show = data.displayDistance })
 
     local waypoint = {
         id = id,
@@ -158,6 +164,7 @@ function WaypointManager.create(data)
             color = data.color or config.defaults.color,
             label = data.label or config.defaults.label,
             icon = data.icon,
+            image = data.image,
             size = data.size or config.defaults.size,
             drawDistance = data.drawDistance or config.defaults.drawDistance,
             fadeDistance = data.fadeDistance or config.defaults.fadeDistance,
@@ -167,15 +174,19 @@ function WaypointManager.create(data)
             removeDistance = data.removeDistance,
             displayDistance = data.displayDistance,
         },
-        dui = dui,
-        duiId = duiId,
+        dui = nil,
+        duiId = nil,
         active = true,
+        isRendering = false,
     }
 
     local index = #waypointArray + 1
     waypointArray[index] = waypoint
     waypointsById[id] = waypoint
     idToIndex[id] = index
+
+    lib.print.debug(('[WAYPOINT #%d] Created (no DUI yet - will acquire when visible) | Total waypoints: %d'):format(id,
+        #waypointArray))
 
     return id
 end
@@ -190,17 +201,30 @@ function WaypointManager.update(id, data)
 
     if data.color then
         waypoint.data.color = data.color
-        waypoint.dui:sendMessage({ action = 'setColor', color = data.color })
+        if waypoint.dui then
+            waypoint.dui:sendMessage({ action = 'setColor', color = data.color })
+        end
     end
 
     if data.label then
         waypoint.data.label = data.label
-        waypoint.dui:sendMessage({ action = 'setLabel', text = data.label })
+        if waypoint.dui then
+            waypoint.dui:sendMessage({ action = 'setLabel', text = data.label })
+        end
     end
 
     if data.icon then
         waypoint.data.icon = data.icon
-        waypoint.dui:sendMessage({ action = 'setIcon', url = data.icon })
+        if waypoint.dui then
+            waypoint.dui:sendMessage({ action = 'setIcon', icon = data.icon })
+        end
+    end
+
+    if data.image then
+        waypoint.data.image = data.image
+        if waypoint.dui then
+            waypoint.dui:sendMessage({ action = 'setImage', url = data.image })
+        end
     end
 
     if data.size then waypoint.data.size = data.size end
@@ -211,12 +235,60 @@ function WaypointManager.update(id, data)
     if data.groundZ then waypoint.data.groundZ = data.groundZ end
 end
 
+--- Acquires a DUI for a waypoint when it becomes visible
+---@param waypoint WaypointInstance
+---@return boolean success Whether the DUI was acquired successfully
+function WaypointManager.acquireForRendering(waypoint)
+    if waypoint.isRendering and waypoint.dui then
+        return true
+    end
+
+    lib.print.debug(('[WAYPOINT #%d] Acquiring DUI - waypoint became visible'):format(waypoint.id))
+    local duiWrapper, duiId = acquireDui()
+    if not duiWrapper then
+        lib.print.error(('[WAYPOINT #%d] FAILED to acquire DUI from pool!'):format(waypoint.id))
+        return false
+    end
+
+    waypoint.dui = duiWrapper.dui
+    waypoint.duiId = duiId
+    waypoint.isRendering = true
+
+    configureDui(waypoint.dui, waypoint.data)
+    lib.print.debug(('[WAYPOINT #%d] Now rendering with DUI #%d'):format(waypoint.id, duiId))
+
+    return true
+end
+
+--- Releases a DUI when a waypoint is no longer visible
+---@param waypoint WaypointInstance
+function WaypointManager.releaseFromRendering(waypoint)
+    if not waypoint.isRendering then
+        return
+    end
+
+    lib.print.debug(('[WAYPOINT #%d] Releasing DUI #%d - waypoint no longer visible'):format(waypoint.id,
+        waypoint.duiId or -1))
+
+    if waypoint.duiId then
+        releaseDui(waypoint.duiId)
+    end
+
+    waypoint.dui = nil
+    waypoint.duiId = nil
+    waypoint.isRendering = false
+    waypoint.lastDistance = nil
+    waypoint.nextDistanceUpdate = nil
+end
+
 function WaypointManager.remove(id)
     local waypoint = waypointsById[id]
     if not waypoint then return end
     waypoint.active = false
 
-    if waypoint.duiId then
+    lib.print.debug(('[WAYPOINT #%d] Removing (wasRendering: %s)'):format(id, tostring(waypoint.isRendering)))
+
+    if waypoint.isRendering and waypoint.duiId then
         releaseDui(waypoint.duiId)
     end
 
@@ -232,6 +304,8 @@ function WaypointManager.remove(id)
     waypointArray[lastIndex] = nil
     waypointsById[id] = nil
     idToIndex[id] = nil
+
+    lib.print.debug(('[WAYPOINT #%d] Removed | Remaining waypoints: %d'):format(id, #waypointArray))
 end
 
 function WaypointManager.removeAll()
@@ -256,8 +330,8 @@ function WaypointManager.getArray()
 end
 
 function WaypointManager.shouldRender(waypoint, camPos)
-    if not waypoint.active or not waypoint.dui then
-        lib.print.debug('Waypoint inactive or missing dui:', waypoint.id)
+    if not waypoint.active then
+        lib.print.debug('Waypoint inactive:', waypoint.id)
         return false
     end
 
@@ -284,7 +358,7 @@ function WaypointManager.shouldRender(waypoint, camPos)
 
 
     if onScreen ~= 1 then
-        lib.print.debug('Waypoint off screen:', waypoint.id)
+        -- lib.print.debug('Waypoint off screen:', waypoint.id)
         return false
     end
 
