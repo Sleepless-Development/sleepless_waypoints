@@ -190,5 +190,38 @@ window.addEventListener("message", (event) => {
         document.getElementById(`marker-${currentType}`).style.display = "flex";
       }
       break;
+
+    case "reset":
+      // Reset all state for DUI pool reuse
+      currentType = null;
+      currentDistance = null;
+
+      // Hide all markers
+      document
+        .querySelectorAll(".marker-type")
+        .forEach((el) => (el.style.display = "none"));
+
+      // Reset color to default
+      document.documentElement.style.setProperty("--marker-color", "#f5a623");
+
+      // Reset checkpoint elements
+      document.getElementById("checkpoint-label").textContent = "CHECKPOINT";
+      document.getElementById("checkpoint-distance-value").textContent = "0";
+      document.getElementById("checkpoint-icon").className = "";
+      document.querySelector(".checkpoint-icon-container").style.display =
+        "none";
+      document.querySelector(".checkpoint-image-container").style.display =
+        "none";
+      document.getElementById("checkpoint-image").src = "";
+      document.getElementById("checkpoint-distance").style.display = "flex";
+
+      // Reset small marker elements
+      document.getElementById("small-distance-value").textContent = "0";
+      document.getElementById("small-icon").className = "";
+      document.querySelector(".small-icon-container").style.display = "none";
+      document.querySelector(".small-image-container").style.display = "none";
+      document.getElementById("small-image").src = "";
+      document.getElementById("small-distance").style.display = "flex";
+      break;
   }
 });

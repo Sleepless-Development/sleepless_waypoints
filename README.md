@@ -10,6 +10,7 @@ A 3D waypoint utility for FiveM servers. create and manage custom waypoints in t
 ## Features
 
 - Built with DUI
+- **DUI pooling system** to prevent texture cache memory leaks
 - Create and remove 3D waypoints
 - Distance scaling
 - highly configurable
@@ -25,6 +26,7 @@ A 3D waypoint utility for FiveM servers. create and manage custom waypoints in t
 4. Restart your server.
 
 ## Preview
+
 <img width="2559" height="1439" alt="image" src="https://github.com/user-attachments/assets/ab7ff4bc-5480-4f4f-9ee3-446f8a4e346e" />
 
 ## Documentation

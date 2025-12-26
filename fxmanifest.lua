@@ -5,6 +5,11 @@ version '1.0.3'
 lua54 'yes'
 author 'DemiAutomatic'
 
+files {
+    'web/*',
+    'client/modules/*.lua',
+}
+
 shared_scripts {
     '@ox_lib/init.lua',
     'config.lua',
@@ -12,15 +17,9 @@ shared_scripts {
 }
 
 client_scripts {
-    'client/modules/*.lua',
     'client/main.lua',
 }
 
 server_scripts {
-    'server/modules/*.lua',
     'server/main.lua',
-}
-
-files {
-    'web/*',
 }

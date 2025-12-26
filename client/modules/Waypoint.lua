@@ -10,6 +10,10 @@ local idToIndex = {} -- maps waypoint id -> array index
 local waypointArray = {}
 local waypointId = 0
 
+-- DUI Pool Management
+local poolAvailable = {}
+local poolInUse = {}
+local poolNextId = 0
 local waitingForDuiLoad = {}
 
 RegisterNUICallback('load', function(data, cb)
@@ -18,12 +22,10 @@ RegisterNUICallback('load', function(data, cb)
     cb({})
 end)
 
-function WaypointManager.create(data)
-    waypointId = waypointId + 1
-    local id = waypointId
-
-    local waypointType = data.type or 'small'
-
+--- Creates a new DUI instance
+---@param id number The ID to use for this DUI
+---@return table duiInstance The created DUI wrapper
+local function createDui(id)
     local dui = lib.dui:new({
         url = ('nui://%s/web/index.html'):format(cache.resource),
         width = config.dui.width,
@@ -38,6 +40,92 @@ function WaypointManager.create(data)
         Wait(100)
     end
 
+    return {
+        id = id,
+        dui = dui,
+    }
+end
+
+--- Resets a DUI to its default state for reuse
+---@param duiWrapper table The DUI wrapper to reset
+local function resetDui(duiWrapper)
+    local dui = duiWrapper.dui
+    dui:sendMessage({ action = 'reset' })
+end
+
+--- Acquire a DUI from the pool (creates new one if pool is empty)
+---@return table duiWrapper The acquired DUI wrapper
+---@return number id The ID of the acquired DUI
+local function acquireDui()
+    if #poolAvailable > 0 then
+        local duiWrapper = table.remove(poolAvailable)
+        poolInUse[duiWrapper.id] = duiWrapper
+        lib.print.debug('Acquired pooled DUI', duiWrapper.id, '- Available:', #poolAvailable)
+        return duiWrapper, duiWrapper.id
+    end
+
+    poolNextId = poolNextId + 1
+    local id = poolNextId
+    local duiWrapper = createDui(id)
+    poolInUse[id] = duiWrapper
+
+    lib.print.debug('Created new DUI', id, '(pool will grow as needed)')
+    return duiWrapper, id
+end
+
+---@param id number The ID of the DUI to release
+local function releaseDui(id)
+    local duiWrapper = poolInUse[id]
+    if not duiWrapper then
+        lib.print.debug('Attempted to release unknown DUI', id)
+        return
+    end
+
+    poolInUse[id] = nil
+
+    resetDui(duiWrapper)
+    poolAvailable[#poolAvailable + 1] = duiWrapper
+    lib.print.debug('Released DUI', id, 'back to pool - Available:', #poolAvailable)
+end
+
+--- Cleanup all DUIs (call on resource stop)
+local function cleanupPool()
+    lib.print.debug('Cleaning up DUI pool...')
+
+    for id, duiWrapper in pairs(poolInUse) do
+        duiWrapper.dui:remove()
+    end
+    poolInUse = {}
+
+    for _, duiWrapper in ipairs(poolAvailable) do
+        duiWrapper.dui:remove()
+    end
+    poolAvailable = {}
+
+    lib.print.debug('DUI pool cleanup complete')
+end
+
+print('Sleepless Waypoints - Client started')
+
+AddEventHandler('onResourceStop', function(resourceName)
+    if resourceName == cache.resource then
+        cleanupPool()
+    end
+end)
+
+function WaypointManager.create(data)
+    waypointId = waypointId + 1
+    local id = waypointId
+
+    local waypointType = data.type or 'small'
+
+    local duiWrapper, duiId = acquireDui()
+    if not duiWrapper then
+        lib.print.error('Failed to acquire DUI from pool for waypoint', id)
+        return nil
+    end
+
+    local dui = duiWrapper.dui
     dui:sendMessage({ action = 'setType', type = waypointType })
 
     if data.color then
@@ -76,11 +164,11 @@ function WaypointManager.create(data)
             minHeight = data.minHeight or config.defaults.minHeight,
             maxHeight = data.maxHeight or config.defaults.maxHeight,
             groundZ = data.groundZ or (data.coords.z + config.defaults.groundZOffset),
-            removeWhenClose = data.removeWhenClose or false,
-            removeDistance = data.removeDistance or 5.0,
+            removeDistance = data.removeDistance,
             displayDistance = data.displayDistance,
         },
         dui = dui,
+        duiId = duiId,
         active = true,
     }
 
@@ -127,7 +215,10 @@ function WaypointManager.remove(id)
     local waypoint = waypointsById[id]
     if not waypoint then return end
     waypoint.active = false
-    waypoint.dui:remove()
+
+    if waypoint.duiId then
+        releaseDui(waypoint.duiId)
+    end
 
     local index = idToIndex[id]
     local lastIndex = #waypointArray
@@ -254,7 +345,6 @@ function WaypointManager.render(waypoint, camPos, playerPos)
         local size = baseSize * math.max(config.rendering.smallMinScale, perspectiveScale)
         local height = size * config.rendering.smallAspectRatio
 
-        -- Offset position down so the visual center stays at original coords
         local markerPos = vec3(data.coords.x, data.coords.y, data.coords.z - (height / 2))
 
         utils.drawTexturedTriangle(
@@ -267,7 +357,7 @@ function WaypointManager.render(waypoint, camPos, playerPos)
         )
     end
 
-    if data.removeWhenClose and playerDist <= data.removeDistance then
+    if data.removeDistance and playerDist <= data.removeDistance then
         WaypointManager.remove(waypoint.id)
         lib.print.debug('Removed waypoint for being close:', waypoint.id)
         return false

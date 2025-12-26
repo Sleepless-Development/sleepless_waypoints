@@ -19,19 +19,19 @@
 ---@field minHeight? number Minimum height for checkpoint line (default: 2.0)
 ---@field maxHeight? number Maximum height for checkpoint line (default: 50.0)
 ---@field groundZ? number Ground Z coordinate for the line (default: coords.z - 2)
----@field removeWhenClose? boolean Whether to auto-remove when close (default: false)
----@field removeDistance? number Distance to player for auto-removal (default: 5.0)
+---@field removeDistance? number Distance to player for auto-removal (optional)
 
 ---@class WaypointInstance
 ---@field id number Unique waypoint identifier
 ---@field data WaypointData Waypoint configuration data
 ---@field dui Dui The DUI instance for rendering
+---@field duiId number The DUI pool ID for releasing back to pool
 ---@field active boolean Whether the waypoint is active
 ---@field nextDistanceUpdate number? Next timestamp to update distance text
 ---@field lastDistance number? Last distance value shown
 
 ---@class WaypointManager
----@field create fun(data: WaypointData): number Create a new waypoint, returns waypoint ID
+---@field create fun(data: WaypointData): number? Create a new waypoint, returns waypoint ID
 ---@field update fun(id: number, data: WaypointData) Update waypoint properties
 ---@field remove fun(id: number) Remove a waypoint by ID
 ---@field removeAll fun() Remove all active waypoints
