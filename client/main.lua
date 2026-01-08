@@ -115,6 +115,7 @@ exports('get', Waypoint.get)
 -------------------------------------------------
 -- Server Event Handlers
 -------------------------------------------------
+
 -- Maps server waypoint IDs to client waypoint IDs
 local serverToClientId = {}
 

@@ -156,6 +156,10 @@ function WaypointManager.create(data)
         data.displayDistance = true
     end
 
+    local drawDist = data.drawDistance or config.defaults.drawDistance
+    local fadeDist = data.fadeDistance or config.defaults.fadeDistance
+    local removeDist = data.removeDistance
+
     local waypoint = {
         id = id,
         data = {
@@ -166,12 +170,15 @@ function WaypointManager.create(data)
             icon = data.icon,
             image = data.image,
             size = data.size or config.defaults.size,
-            drawDistance = data.drawDistance or config.defaults.drawDistance,
-            fadeDistance = data.fadeDistance or config.defaults.fadeDistance,
+            drawDistance = drawDist,
+            drawDistanceSq = drawDist * drawDist,
+            fadeDistance = fadeDist,
+            fadeDistanceSq = fadeDist * fadeDist,
             minHeight = data.minHeight or config.defaults.minHeight,
             maxHeight = data.maxHeight or config.defaults.maxHeight,
             groundZ = data.groundZ or (data.coords.z + config.defaults.groundZOffset),
-            removeDistance = data.removeDistance,
+            removeDistance = removeDist,
+            removeDistanceSq = removeDist and (removeDist * removeDist) or nil,
             displayDistance = data.displayDistance,
         },
         dui = nil,
@@ -329,6 +336,39 @@ function WaypointManager.getArray()
     return waypointArray
 end
 
+---@param basePos vector3 The base/bottom position of the triangle
+---@param width number The width of the triangle
+---@param height number The height of the triangle
+---@param camPos vector3 The camera position (for billboard orientation)
+---@return boolean onScreen Whether any corner is visible
+local function isTriangleOnScreen(basePos, width, height, camPos)
+    local halfW = width / 2
+
+    local up = vec3(0.0, 0.0, 1.0)
+    local toCamera = camPos - basePos
+    local forward = norm(vec3(toCamera.x, toCamera.y, 0.0))
+    local right = norm(cross(up, forward))
+
+    local bottom = basePos
+    local topLeft = basePos - (right * halfW) + (up * height)
+    local topRight = basePos + (right * halfW) + (up * height)
+
+    local onScreen = GetScreenCoordFromWorldCoord(bottom.x, bottom.y, bottom.z)
+    if onScreen == 1 then return true end
+
+    onScreen = GetScreenCoordFromWorldCoord(topLeft.x, topLeft.y, topLeft.z)
+    if onScreen == 1 then return true end
+
+    onScreen = GetScreenCoordFromWorldCoord(topRight.x, topRight.y, topRight.z)
+    if onScreen == 1 then return true end
+
+    local center = vec3(basePos.x, basePos.y, basePos.z + (height * 0.5))
+    onScreen = GetScreenCoordFromWorldCoord(center.x, center.y, center.z)
+    if onScreen == 1 then return true end
+
+    return false
+end
+
 function WaypointManager.shouldRender(waypoint, camPos)
     if not waypoint.active then
         lib.print.debug('Waypoint inactive:', waypoint.id)
@@ -336,29 +376,33 @@ function WaypointManager.shouldRender(waypoint, camPos)
     end
 
     local data = waypoint.data
-    local camDist = #(camPos - data.coords)
+    local diff = camPos - data.coords
+    local camDistSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z
 
-    if camDist > data.drawDistance then
-        lib.print.debug('Waypoint too far:', waypoint.id, camDist, data.drawDistance)
+    if camDistSq > data.drawDistanceSq then
+        lib.print.debug('Waypoint too far:', waypoint.id, camDistSq, data.drawDistanceSq)
         return false
     end
 
-    local onScreen, x, y
+    local camDist = math.sqrt(camDistSq)
+    local baseSize = data.size * config.rendering.checkpointBaseMultiplier
+    local perspectiveScale = camDist / config.rendering.perspectiveDivisor
+
+    local width, height, basePos
 
     if data.type == "checkpoint" then
-        onScreen, x, y = GetScreenCoordFromWorldCoord(data.coords.x, data.coords.y, data.coords.z)
-        if not onScreen then
-            local markerCenterPos = vec3(data.coords.x, data.coords.y,
-                data.groundZ + (data.size * config.rendering.checkpointBaseMultiplier))
-            onScreen, x, y = GetScreenCoordFromWorldCoord(markerCenterPos.x, markerCenterPos.y, markerCenterPos.z)
-        end
+        local size = baseSize * math.max(config.rendering.checkpointMinScale, perspectiveScale)
+        width = size
+        height = size * config.rendering.checkpointAspectRatio
+        basePos = vec3(data.coords.x, data.coords.y, data.groundZ)
     else
-        onScreen, x, y = GetScreenCoordFromWorldCoord(data.coords.x, data.coords.y, data.coords.z)
+        local size = baseSize * math.max(config.rendering.smallMinScale, perspectiveScale)
+        width = size
+        height = size * config.rendering.smallAspectRatio
+        basePos = vec3(data.coords.x, data.coords.y, data.coords.z - (height / 2))
     end
 
-
-    if onScreen ~= 1 then
-        -- lib.print.debug('Waypoint off screen:', waypoint.id)
+    if not isTriangleOnScreen(basePos, width, height, camPos) then
         return false
     end
 
@@ -373,8 +417,11 @@ function WaypointManager.render(waypoint, camPos, playerPos)
     if not success then return false end
 
     local data = waypoint.data
-    local camDist = #(camPos - data.coords)
-    local playerDist = #(playerPos - data.coords)
+    local diff = camPos - data.coords
+    local camDistSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z
+    local playerDiff = playerPos - data.coords
+    local playerDistSq = playerDiff.x * playerDiff.x + playerDiff.y * playerDiff.y + playerDiff.z * playerDiff.z
+    local camDist = math.sqrt(camDistSq)
 
     local alpha = 255
     if camDist > data.fadeDistance then
@@ -385,15 +432,19 @@ function WaypointManager.render(waypoint, camPos, playerPos)
 
     if not waypoint.dui.dictName or not waypoint.dui.txtName then return false end
 
-    if data.displayDistance and (not waypoint.nextDistanceUpdate or GetGameTimer() >= waypoint.nextDistanceUpdate) and (waypoint.lastDistance ~= math.floor(playerDist)) then
-        waypoint.nextDistanceUpdate = GetGameTimer() + config.rendering.distanceUpdateInterval
-        waypoint.lastDistance = math.floor(playerDist)
+    if data.displayDistance and (not waypoint.nextDistanceUpdate or GetGameTimer() >= waypoint.nextDistanceUpdate) then
+        local playerDist = math.sqrt(playerDistSq)
+        local flooredDist = math.floor(playerDist)
+        if waypoint.lastDistance ~= flooredDist then
+            waypoint.nextDistanceUpdate = GetGameTimer() + config.rendering.distanceUpdateInterval
+            waypoint.lastDistance = flooredDist
 
-        waypoint.dui:sendMessage({
-            action = 'setDistance',
-            value = tostring(math.floor(playerDist)),
-            duration = config.rendering.distanceUpdateInterval
-        })
+            waypoint.dui:sendMessage({
+                action = 'setDistance',
+                value = tostring(flooredDist),
+                duration = config.rendering.distanceUpdateInterval
+            })
+        end
     end
 
     if data.type == 'checkpoint' then
@@ -431,7 +482,7 @@ function WaypointManager.render(waypoint, camPos, playerPos)
         )
     end
 
-    if data.removeDistance and playerDist <= data.removeDistance then
+    if data.removeDistanceSq and playerDistSq <= data.removeDistanceSq then
         WaypointManager.remove(waypoint.id)
         lib.print.debug('Removed waypoint for being close:', waypoint.id)
         return false

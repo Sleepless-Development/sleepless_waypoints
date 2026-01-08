@@ -15,11 +15,14 @@
 ---@field size? number Size multiplier (default: 1.0)
 ---@field displayDistance? boolean Whether to show distance text (default: true)
 ---@field drawDistance? number Max distance to render (default: 500.0)
+---@field drawDistanceSq? number Squared draw distance (pre-calculated for optimization)
 ---@field fadeDistance? number Distance to start fading (default: 400.0)
+---@field fadeDistanceSq? number Squared fade distance (pre-calculated for optimization)
 ---@field minHeight? number Minimum height for checkpoint line (default: 2.0)
 ---@field maxHeight? number Maximum height for checkpoint line (default: 50.0)
 ---@field groundZ? number Ground Z coordinate for the line (default: coords.z - 2)
 ---@field removeDistance? number Distance to player for auto-removal (optional)
+---@field removeDistanceSq? number Squared remove distance (pre-calculated for optimization)
 
 ---@class WaypointInstance
 ---@field id number Unique waypoint identifier
@@ -30,6 +33,7 @@
 ---@field isRendering boolean Whether the waypoint currently has a DUI acquired for rendering
 ---@field nextDistanceUpdate number? Next timestamp to update distance text
 ---@field lastDistance number? Last distance value shown
+---@field cachedCamDistSq number? Cached squared camera distance from shouldRender check
 
 ---@class WaypointManager
 ---@field create fun(data: WaypointData): number? Create a new waypoint, returns waypoint ID
