@@ -18,7 +18,7 @@
 ---@field drawDistanceSq? number Squared draw distance (pre-calculated for optimization)
 ---@field fadeDistance? number Distance to start fading (default: 400.0)
 ---@field fadeDistanceSq? number Squared fade distance (pre-calculated for optimization)
----@field minHeight? number Minimum height for checkpoint line (default: 2.0)
+---@field minHeight? number Minimum height for checkpoint line (default: 0.5)
 ---@field maxHeight? number Maximum height for checkpoint line (default: 50.0)
 ---@field groundZ? number Ground Z coordinate for the line (default: coords.z - 2)
 ---@field removeDistance? number Distance to player for auto-removal (optional)

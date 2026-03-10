@@ -138,7 +138,7 @@ local function configureDui(dui, data)
     dui:sendMessage({ action = 'showDistance', show = data.displayDistance })
 
     if data.icon then
-        dui:sendMessage({ action = 'setIcon', icon = data.icon })
+        dui:sendMessage({ action = 'setIcon', icon = data.icon, iconColor = data.iconColor })
     end
 
     if data.image then
@@ -168,6 +168,7 @@ function WaypointManager.create(data)
             color = data.color or config.defaults.color,
             label = data.label or config.defaults.label,
             icon = data.icon,
+            iconColor = data.iconColor,
             image = data.image,
             size = data.size or config.defaults.size,
             drawDistance = drawDist,
@@ -206,6 +207,13 @@ function WaypointManager.update(id, data)
         waypoint.data.coords = data.coords
     end
 
+    if data.type then
+        waypoint.data.type = data.type
+        if waypoint.dui then
+            waypoint.dui:sendMessage({ action = 'setType', type = data.type })
+        end
+    end
+
     if data.color then
         waypoint.data.color = data.color
         if waypoint.dui then
@@ -220,10 +228,20 @@ function WaypointManager.update(id, data)
         end
     end
 
-    if data.icon then
-        waypoint.data.icon = data.icon
+    if data.icon ~= nil or data.iconColor ~= nil then
+        if data.icon ~= nil then
+            waypoint.data.icon = data.icon
+        end
+        if data.iconColor ~= nil then
+            waypoint.data.iconColor = data.iconColor
+        end
         if waypoint.dui then
-            waypoint.dui:sendMessage({ action = 'setIcon', icon = data.icon })
+            waypoint.dui:sendMessage({
+                action = 'setIcon',
+                icon = waypoint.data.icon,
+                iconColor = waypoint.data
+                    .iconColor
+            })
         end
     end
 
@@ -234,12 +252,33 @@ function WaypointManager.update(id, data)
         end
     end
 
+    if data.displayDistance ~= nil then
+        waypoint.data.displayDistance = data.displayDistance
+        if waypoint.dui then
+            waypoint.dui:sendMessage({ action = 'showDistance', show = data.displayDistance })
+        end
+    end
+
     if data.size then waypoint.data.size = data.size end
-    if data.drawDistance then waypoint.data.drawDistance = data.drawDistance end
-    if data.fadeDistance then waypoint.data.fadeDistance = data.fadeDistance end
+
+    if data.drawDistance then
+        waypoint.data.drawDistance = data.drawDistance
+        waypoint.data.drawDistanceSq = data.drawDistance * data.drawDistance
+    end
+
+    if data.fadeDistance then
+        waypoint.data.fadeDistance = data.fadeDistance
+        waypoint.data.fadeDistanceSq = data.fadeDistance * data.fadeDistance
+    end
+
     if data.minHeight then waypoint.data.minHeight = data.minHeight end
     if data.maxHeight then waypoint.data.maxHeight = data.maxHeight end
     if data.groundZ then waypoint.data.groundZ = data.groundZ end
+
+    if data.removeDistance then
+        waypoint.data.removeDistance = data.removeDistance
+        waypoint.data.removeDistanceSq = data.removeDistance * data.removeDistance
+    end
 end
 
 --- Acquires a DUI for a waypoint when it becomes visible
@@ -392,8 +431,10 @@ function WaypointManager.shouldRender(waypoint, camPos)
 
     if data.type == "checkpoint" then
         local size = baseSize * math.max(config.rendering.checkpointMinScale, perspectiveScale)
-        width = size
-        height = size * config.rendering.checkpointAspectRatio
+        local unclamped = size * config.rendering.checkpointAspectRatio
+        height = math.max(data.minHeight, math.min(data.maxHeight, unclamped))
+        -- Scale width proportionally to maintain aspect ratio when height is clamped
+        width = size * (height / unclamped)
         basePos = vec3(data.coords.x, data.coords.y, data.groundZ)
     else
         local size = baseSize * math.max(config.rendering.smallMinScale, perspectiveScale)
@@ -452,8 +493,11 @@ function WaypointManager.render(waypoint, camPos, playerPos)
         local perspectiveScale = camDist / config.rendering.perspectiveDivisor
         local size = baseSize * math.max(config.rendering.checkpointMinScale, perspectiveScale)
 
-        local quadWidth = size
-        local quadHeight = size * config.rendering.checkpointAspectRatio
+        local unclampedHeight = size * config.rendering.checkpointAspectRatio
+        local quadHeight = math.max(data.minHeight, math.min(data.maxHeight, unclampedHeight))
+        -- Scale width proportionally to maintain aspect ratio when height is clamped
+        local quadWidth = size * (quadHeight / unclampedHeight)
+
         local markerPos = vec3(data.coords.x, data.coords.y, data.groundZ)
 
         utils.drawTexturedTriangle(
