@@ -5,7 +5,10 @@ A 3D waypoint utility for FiveM servers. create and manage custom waypoints in t
 ![](https://img.shields.io/github/downloads/Sleepless-Development/sleepless_waypoints/total?logo=github)
 ![](https://img.shields.io/github/downloads/Sleepless-Development/sleepless_waypoints/latest/total?logo=github)
 ![](https://img.shields.io/github/contributors/Sleepless-Development/sleepless_waypoints?logo=github)
-![](https://img.shields.io/github/v/release/Sleepless-Development/sleepless_waypoints?logo=github)
+![](https://img.shields.io/github/v/release/Sleepless-Development/sleepless_waypoints?logo=github)\
+[![](https://badges.5metrics.dev/sleepless_waypoints/serverRank.svg?style=for-the-badge)](https://5metrics.dev/resource/sleepless_waypoints)
+[![](https://badges.5metrics.dev/sleepless_waypoints/servers.svg?style=for-the-badge)](https://5metrics.dev/resource/sleepless_waypoints)
+[![](https://badges.5metrics.dev/sleepless_waypoints/players.svg?style=for-the-badge)](https://5metrics.dev/resource/sleepless_waypoints)
 
 ## Features
 
