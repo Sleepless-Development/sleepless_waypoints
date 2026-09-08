@@ -34,7 +34,7 @@ A 3D waypoint utility for FiveM servers. create and manage custom waypoints in t
 
 ## Documentation
 
-For detailed documentation, usage examples, and API reference, visit [our documentation](https://sleeplessdevelopment.dev/waypoints).
+For detailed documentation, usage examples, and API reference, visit [our documentation](https://sleeplessdevelopment.dev/docs/waypoints).
 
 ## 💾 Download
 
