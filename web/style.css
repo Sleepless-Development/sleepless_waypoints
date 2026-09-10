@@ -1,7 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+@font-face {
+    font-family: DINPRO;
+    src: url("./fonts/dinpro_bold.otf") format("opentype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: DINPRO;
+    src: url("./fonts/dinpro_black.otf") format("opentype");
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
 
 :root {
-    --marker-color: #f5a623;
+    --marker-color: rgb(49, 164, 252);
+    --surface: 0, 0, 0;
+    --text: 255, 255, 255;
 }
 
 * {
@@ -18,7 +34,7 @@ body {
     justify-content: center;
     align-items: flex-start;
     overflow: hidden;
-    font-family: "Orbitron", sans-serif;
+    font-family: DINPRO, "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -42,14 +58,12 @@ body {
 .small-image-container {
     width: 240px;
     height: 240px;
-    background: rgba(0, 0, 0, 0.7);
-    border: 6px solid var(--marker-color);
-    border-radius: 30px;
+    background: rgba(0, 0, 0, 0.72);
+    border: 6px solid rgba(255, 255, 255, 0.16);
+    border-radius: 16px;
     display: none;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    rotate: 45deg;
 }
 
 .small-image-container img {
@@ -57,26 +71,22 @@ body {
     height: 85%;
     object-fit: contain;
     display: none;
-    rotate: -45deg;
 }
 
 .small-icon-container {
     width: 240px;
     height: 240px;
-    background: rgba(0, 0, 0, 0.7);
-    border: 6px solid var(--marker-color);
-    border-radius: 30px;
+    background: rgba(0, 0, 0, 0.72);
+    border: 6px solid rgba(255, 255, 255, 0.16);
+    border-radius: 16px;
     display: none;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    rotate: 45deg;
 }
 
 #small-icon {
     font-size: 140px;
     color: var(--marker-color);
-    rotate: -45deg;
     text-shadow: 
         0 0 10px rgba(0, 0, 0, 0.9),
         4px 4px 8px rgba(0, 0, 0, 0.95);
@@ -226,7 +236,6 @@ body {
     height: 6px;
     background: var(--marker-color);
     margin: 10px 0;
-    box-shadow: 0 0 10px var(--marker-color);
 }
 
 #checkpoint-label {
@@ -248,7 +257,6 @@ body {
     border-top: 54px solid var(--marker-color);
     margin-top: 10px;
     margin-bottom: 15px;
-    filter: drop-shadow(0 0 16px var(--marker-color));
 }
 
 .checkpoint-line {

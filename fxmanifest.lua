@@ -6,7 +6,7 @@ lua54 'yes'
 author 'DemiAutomatic'
 
 files {
-    'web/*',
+    'web/**',
     'client/modules/*.lua',
 }
 
