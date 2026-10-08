@@ -15,6 +15,7 @@ A 3D waypoint utility for FiveM servers. create and manage custom waypoints in t
 - Built with DUI
 - **DUI pooling system** to prevent texture cache memory leaks
 - Create and remove 3D waypoints
+- World-space DUI timers (countdown or script-driven)
 - Distance scaling
 - highly configurable
 - image and fontawesome support

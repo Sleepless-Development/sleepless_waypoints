@@ -45,6 +45,26 @@ config.dui = {
 }
 
 -------------------------------------------------
+-- Timer Settings
+-------------------------------------------------
+-- World-space timers (createTimer). Separate from waypoint markers.
+config.timer = {
+    drawDistance = 12.0,     -- Metres before the timer hides
+    fadeDistance = 9.0,      -- Metres before it starts fading
+    size = 1.0,              -- Scale multiplier
+    color = '#31a4fc',       -- Progress colour, #rrggbb
+    label = 'TIMER',         -- Used when label is omitted
+    background = true,       -- Black plate behind the timer
+    removeOnComplete = true, -- Remove a duration timer when it hits zero
+}
+
+-- Square texture. Wide and round styles share it, and the quad crops to the style.
+config.timerDui = {
+    width = 512,
+    height = 512,
+}
+
+-------------------------------------------------
 -- Rendering Settings
 -------------------------------------------------
 config.rendering = {
@@ -65,6 +85,11 @@ config.rendering = {
     -- Small type scaling
     smallMinScale = 1.0,    -- Minimum perspective scale for small markers
     smallAspectRatio = 2.0, -- Height to width ratio for small marker quads
+
+    -- Timer scaling. Pixel scale is metres per DUI pixel at the minimum scale.
+    timerPixelScale = 0.0012,
+    timerMinScale = 1.0,
+    timerPerspectiveDivisor = 14.0,
 }
 
 -------------------------------------------------

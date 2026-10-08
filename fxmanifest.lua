@@ -8,6 +8,7 @@ author 'DemiAutomatic'
 files {
     'web/**',
     'client/modules/*.lua',
+    'shared/*.lua',
 }
 
 shared_scripts {

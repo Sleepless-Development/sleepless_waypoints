@@ -1,4 +1,5 @@
 local Waypoint = require 'client.modules.Waypoint'
+local Timer = require 'client.modules.Timer'
 local config = require 'config'
 
 -------------------------------------------------
@@ -6,6 +7,8 @@ local config = require 'config'
 -------------------------------------------------
 local shouldRender = {}
 local currentlyRendering = {}
+local shouldRenderTimers = {}
+local currentlyRenderingTimers = {}
 local drawRunning = false
 
 local function drawLoop()
@@ -13,13 +16,17 @@ local function drawLoop()
     drawRunning = true
 
     CreateThread(function()
-        while #shouldRender > 0 do
+        while #shouldRender > 0 or #shouldRenderTimers > 0 do
             local camPos = GetFinalRenderedCamCoord()
             local playerPos = GetEntityCoords(cache.ped)
 
             for i = 1, #shouldRender do
                 local waypoint = shouldRender[i]
                 Waypoint.render(waypoint, camPos, playerPos)
+            end
+
+            for i = 1, #shouldRenderTimers do
+                Timer.render(shouldRenderTimers[i])
             end
 
             Wait(0)
@@ -95,7 +102,39 @@ CreateThread(function()
         shouldRender = newShouldRender
         currentlyRendering = newCurrentlyRendering
 
-        if #shouldRender > 0 and not drawRunning then
+        Timer.tick()
+
+        local newShouldRenderTimers = {}
+        local newCurrentlyRenderingTimers = {}
+        local timerArray = Timer.getArray()
+
+        for i = 1, #timerArray do
+            local timer = timerArray[i]
+            if Timer.shouldRender(timer, camPos) then
+                if not timer.isRendering then
+                    Timer.acquireForRendering(timer)
+                end
+
+                if timer.isRendering then
+                    newShouldRenderTimers[#newShouldRenderTimers + 1] = timer
+                    newCurrentlyRenderingTimers[timer.id] = true
+                end
+            end
+        end
+
+        for id, _ in pairs(currentlyRenderingTimers) do
+            if not newCurrentlyRenderingTimers[id] then
+                local timer = Timer.get(id)
+                if timer then
+                    Timer.releaseFromRendering(timer)
+                end
+            end
+        end
+
+        shouldRenderTimers = newShouldRenderTimers
+        currentlyRenderingTimers = newCurrentlyRenderingTimers
+
+        if (#shouldRender > 0 or #shouldRenderTimers > 0) and not drawRunning then
             drawLoop()
         end
 
@@ -111,6 +150,33 @@ exports('update', Waypoint.update)
 exports('remove', Waypoint.remove)
 exports('removeAll', Waypoint.removeAll)
 exports('get', Waypoint.get)
+
+local serverToClientTimerId = {}
+
+local function forgetTimerClientId(clientId)
+    for serverId, mapped in pairs(serverToClientTimerId) do
+        if mapped == clientId then
+            serverToClientTimerId[serverId] = nil
+            return
+        end
+    end
+end
+
+exports('createTimer', Timer.create)
+
+exports('updateTimer', Timer.update)
+
+exports('removeTimer', function(id)
+    Timer.remove(id)
+    forgetTimerClientId(id)
+end)
+
+exports('removeAllTimers', function()
+    Timer.removeAll()
+    serverToClientTimerId = {}
+end)
+
+exports('getTimer', Timer.get)
 
 -------------------------------------------------
 -- Server Event Handlers
@@ -144,11 +210,39 @@ RegisterNetEvent('sleepless_waypoints:removeAll', function()
     serverToClientId = {}
 end)
 
+RegisterNetEvent('sleepless_waypoints:createTimer', function(serverId, data)
+    local clientId = Timer.create(data)
+    serverToClientTimerId[serverId] = clientId
+end)
+
+RegisterNetEvent('sleepless_waypoints:updateTimer', function(serverId, data)
+    local clientId = serverToClientTimerId[serverId]
+    if clientId then
+        Timer.update(clientId, data)
+    end
+end)
+
+RegisterNetEvent('sleepless_waypoints:removeTimer', function(serverId)
+    local clientId = serverToClientTimerId[serverId]
+    if clientId then
+        Timer.remove(clientId)
+        serverToClientTimerId[serverId] = nil
+    end
+end)
+
+RegisterNetEvent('sleepless_waypoints:removeAllTimers', function()
+    for _, clientId in pairs(serverToClientTimerId) do
+        Timer.remove(clientId)
+    end
+    serverToClientTimerId = {}
+end)
+
 -------------------------------------------------
 -- Cleanup
 -------------------------------------------------
 AddEventHandler('onResourceStop', function(resource)
     if resource == cache.resource then
         Waypoint.removeAll()
+        Timer.removeAll()
     end
 end)

@@ -4,6 +4,7 @@ if lib.context == "client" then
     -------------------------------------------------
     ---
     local Waypoint = require 'client.modules.Waypoint'
+    local Timer = require 'client.modules.Timer'
 
 
     -- Test small marker
@@ -124,9 +125,59 @@ if lib.context == "client" then
         print('Created ' .. #waypoints .. ' waypoints in a line')
     end, false)
 
+    RegisterCommand('testtimer', function()
+        local styles = { 'pill', 'bar', 'chip', 'stack', 'dial', 'pie', 'donut', 'gauge', 'clock', 'dots', 'signal' }
+
+        for i = 1, #styles do
+            local style = styles[i]
+            local ramp = style == 'dots' or style == 'signal'
+            Timer.create({
+                coords = GetOffsetFromEntityInWorldCoords(cache.ped, (i - 4.5) * 0.75, 2.4, 0.55),
+                style = style,
+                label = style,
+                duration = 8000 + (i * 1500),
+                color = '#31a4fc',
+                colors = ramp and {
+                    { at = 0.0, color = '#31a4fc' },
+                    { at = 0.45, color = '#f5a623' },
+                    { at = 0.75, color = '#b83e3e' },
+                } or nil,
+                blend = style == 'signal',
+                drawDistance = 25.0,
+                onEnd = function(timerId)
+                    print(('timer finished: %s'):format(timerId))
+                end,
+            })
+        end
+
+        print('Created a row of timers')
+    end, false)
+
+    RegisterCommand('testtimerprogress', function()
+        local pos = GetOffsetFromEntityInWorldCoords(cache.ped, 0.0, 2.0, 0.55)
+        local id = Timer.create({
+            coords = pos,
+            style = 'stack',
+            label = 'Filling',
+            progress = 0.0,
+            color = '#31a4fc',
+            drawDistance = 25.0,
+        })
+
+        CreateThread(function()
+            for step = 1, 20 do
+                Wait(400)
+                Timer.update(id, { progress = step / 20 })
+            end
+        end)
+
+        print('Created a script-driven timer:', id)
+    end, false)
+
     -- Clear all waypoints
     RegisterCommand('clearwaypoints', function()
         Waypoint.removeAll()
+        Timer.removeAll()
         print('All waypoints cleared')
     end, false)
 else

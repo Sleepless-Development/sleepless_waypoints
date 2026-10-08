@@ -1,4 +1,5 @@
 local utils = require 'client.modules.utils'
+local DuiPool = require 'client.modules.duiPool'
 local config = require 'config'
 
 ---@class WaypointManager
@@ -10,121 +11,18 @@ local idToIndex = {} -- maps waypoint id -> array index
 local waypointArray = {}
 local waypointId = 0
 
--- DUI Pool Management
-local poolAvailable = {}
-local poolInUse = {}
-local poolNextId = 0
-local waitingForDuiLoad = {}
-
-RegisterNUICallback('load', function(data, cb)
-    local id = tonumber(data.id)
-    waitingForDuiLoad[id] = nil
-    cb({})
-end)
-
---- Creates a new DUI instance
----@param id number The ID to use for this DUI
----@return table duiInstance The created DUI wrapper
-local function createDui(id)
-    local dui = lib.dui:new({
-        url = ('nui://%s/web/index.html'):format(cache.resource),
-        width = config.dui.width,
-        height = config.dui.height,
-        debug = false
-    })
-
-    waitingForDuiLoad[id] = true
-
-    while waitingForDuiLoad[id] do
-        dui:sendMessage({ action = 'load', id = id })
-        Wait(100)
-    end
-
-    return {
-        id = id,
-        dui = dui,
-    }
-end
-
---- Resets a DUI to its default state for reuse
----@param duiWrapper table The DUI wrapper to reset
-local function resetDui(duiWrapper)
-    local dui = duiWrapper.dui
-    dui:sendMessage({ action = 'reset' })
-end
-
---- Prints current pool status for debugging
-local function debugPoolStatus(context)
-    local inUseCount = 0
-    for _ in pairs(poolInUse) do inUseCount = inUseCount + 1 end
-    lib.print.debug(('[POOL STATUS] %s - In Use: %d | Available: %d | Total Created: %d'):format(
-        context or 'Status',
-        inUseCount,
-        #poolAvailable,
-        poolNextId
-    ))
-end
-
---- Acquire a DUI from the pool (creates new one if pool is empty)
----@return table duiWrapper The acquired DUI wrapper
----@return number id The ID of the acquired DUI
-local function acquireDui()
-    if #poolAvailable > 0 then
-        local duiWrapper = table.remove(poolAvailable)
-        poolInUse[duiWrapper.id] = duiWrapper
-        lib.print.debug(('[POOL] Reusing DUI #%d from pool'):format(duiWrapper.id))
-        debugPoolStatus('After Acquire (reused)')
-        return duiWrapper, duiWrapper.id
-    end
-
-    poolNextId = poolNextId + 1
-    local id = poolNextId
-    local duiWrapper = createDui(id)
-    poolInUse[id] = duiWrapper
-
-    lib.print.debug(('[POOL] Created NEW DUI #%d (pool was empty)'):format(id))
-    debugPoolStatus('After Acquire (new)')
-    return duiWrapper, id
-end
-
----@param id number The ID of the DUI to release
-local function releaseDui(id)
-    local duiWrapper = poolInUse[id]
-    if not duiWrapper then
-        lib.print.debug(('[POOL] WARNING: Attempted to release unknown DUI #%d'):format(id))
-        return
-    end
-
-    poolInUse[id] = nil
-
-    resetDui(duiWrapper)
-    poolAvailable[#poolAvailable + 1] = duiWrapper
-    lib.print.debug(('[POOL] Released DUI #%d back to pool'):format(id))
-    debugPoolStatus('After Release')
-end
-
---- Cleanup all DUIs (call on resource stop)
-local function cleanupPool()
-    lib.print.debug('Cleaning up DUI pool...')
-
-    for id, duiWrapper in pairs(poolInUse) do
-        duiWrapper.dui:remove()
-    end
-    poolInUse = {}
-
-    for _, duiWrapper in ipairs(poolAvailable) do
-        duiWrapper.dui:remove()
-    end
-    poolAvailable = {}
-
-    lib.print.debug('DUI pool cleanup complete')
-end
+local waypointPool = DuiPool.create({
+    name = 'waypoint',
+    url = ('nui://%s/web/index.html'):format(cache.resource),
+    width = config.dui.width,
+    height = config.dui.height,
+})
 
 print('Sleepless Waypoints - Client started')
 
 AddEventHandler('onResourceStop', function(resourceName)
     if resourceName == cache.resource then
-        cleanupPool()
+        waypointPool.cleanup()
     end
 end)
 
@@ -290,7 +188,7 @@ function WaypointManager.acquireForRendering(waypoint)
     end
 
     lib.print.debug(('[WAYPOINT #%d] Acquiring DUI - waypoint became visible'):format(waypoint.id))
-    local duiWrapper, duiId = acquireDui()
+    local duiWrapper, duiId = waypointPool.acquire()
     if not duiWrapper then
         lib.print.error(('[WAYPOINT #%d] FAILED to acquire DUI from pool!'):format(waypoint.id))
         return false
@@ -317,7 +215,7 @@ function WaypointManager.releaseFromRendering(waypoint)
         waypoint.duiId or -1))
 
     if waypoint.duiId then
-        releaseDui(waypoint.duiId)
+        waypointPool.release(waypoint.duiId)
     end
 
     waypoint.dui = nil
@@ -335,7 +233,7 @@ function WaypointManager.remove(id)
     lib.print.debug(('[WAYPOINT #%d] Removing (wasRendering: %s)'):format(id, tostring(waypoint.isRendering)))
 
     if waypoint.isRendering and waypoint.duiId then
-        releaseDui(waypoint.duiId)
+        waypointPool.release(waypoint.duiId)
     end
 
     local index = idToIndex[id]

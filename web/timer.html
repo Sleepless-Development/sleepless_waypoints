@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=512, height=512, initial-scale=1.0" />
+    <link rel="stylesheet" href="timer.css" />
+  </head>
+  <body>
+    <div id="timer" class="tm">
+      <div class="tm-plate">
+        <div class="tm-label"></div>
+        <div class="tm-value"></div>
+        <div class="tm-segments">
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="tm-track"><div class="tm-fill"></div></div>
+        <svg id="tm-chart" class="tm-chart" viewBox="0 0 100 100"></svg>
+      </div>
+    </div>
+    <script defer type="module" src="timer.js"></script>
+  </body>
+</html>
