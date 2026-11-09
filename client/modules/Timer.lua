@@ -43,7 +43,7 @@ local function colorOrDefault(color)
         lib.print.error(('timer color must be #rrggbb, got %s'):format(color))
     end
 
-    return config.timer.color
+    return GetUiPrimaryColor() or config.timer.color
 end
 
 local function normalizeColors(colors)

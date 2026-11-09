@@ -18,6 +18,7 @@ shared_scripts {
 }
 
 client_scripts {
+    'client/ui_theme.lua',
     'client/main.lua',
 }
 

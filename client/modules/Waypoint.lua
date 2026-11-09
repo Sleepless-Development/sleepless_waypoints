@@ -63,7 +63,7 @@ function WaypointManager.create(data)
         data = {
             coords = data.coords,
             type = waypointType,
-            color = data.color or config.defaults.color,
+            color = data.color or GetUiPrimaryColor() or config.defaults.color,
             label = data.label or config.defaults.label,
             icon = data.icon,
             iconColor = data.iconColor,

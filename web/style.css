@@ -15,7 +15,7 @@
 }
 
 :root {
-    --marker-color: rgb(49, 164, 252);
+    --marker-color: rgb(var(--primary, 49, 164, 252));
     --surface: 0, 0, 0;
     --text: 255, 255, 255;
 }

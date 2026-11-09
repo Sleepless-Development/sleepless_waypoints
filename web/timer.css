@@ -35,7 +35,7 @@ body {
 }
 
 .tm {
-    --tm: #31a4fc;
+    --tm: rgb(var(--primary, 49, 164, 252));
     display: none;
     position: absolute;
     color: #fff;

@@ -305,6 +305,12 @@ function paint(now) {
     }
 }
 
+function getDefaultColor() {
+    const channels = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim().split(',').map(Number);
+    if (channels.length !== 3 || channels.some((value) => !Number.isInteger(value) || value < 0 || value > 255)) return '#31a4fc';
+    return '#' + channels.map((value) => value.toString(16).padStart(2, '0')).join('');
+}
+
 function applyTimer(data) {
     cancelAnimationFrame(raf);
     state = {
@@ -314,7 +320,7 @@ function applyTimer(data) {
         elapsed: data.elapsed || 0,
         paused: Boolean(data.paused),
         progress: data.progress || 0,
-        color: data.color || "#31a4fc",
+        color: data.color || getDefaultColor(),
         stops: normalizeStops(data.colors),
         blend: Boolean(data.blend),
         anchor: performance.now(),
